@@ -1,7 +1,7 @@
 from airflow import DAG
 from datetime import datetime
-from airflow.providers.ftp.sensors.ftp import FTPSensor
-from airflow.providers.ftp.operators.ftp import FTPFileTransmitOperator
+from airflow.providers.sftp.sensors.sftp import SFTPSensor
+from airflow.providers.sftp.operators.sftp import SFTPOperator
 from airflow.operators.email import EmailOperator
 from airflow.operators.dummy import DummyOperator
 
@@ -14,20 +14,21 @@ with DAG(
 ) as dag:
 
     # Task 1: Check if the file exists on the FTP server
-    check_file = FTPSensor(
+    check_file = SFTPSensor(
         task_id="check_ftp_file",
-        ftp_conn_id="nielsen_ftp_main",  # Your Airflow FTP connection ID
-        path="/EDI II Mediaplus/2018/EDI II Mediaplus.zip",  # File path on the FTP server
-        poke_interval=60,  # Time in seconds between checks
-        timeout=300,  # Maximum wait time in seconds
+        sftp_conn_id="nielsen_ftp_main",  # Your Airflow FTP connection ID
+        path="/EDI II Mediaplus/2018/",
+        file_pattern="EDI II Mediaplus.zip",  # File path on the FTP server
+        # poke_interval=60,  # Time in seconds between checks
+        # timeout=300,  # Maximum wait time in seconds
     )
 
     # Task 2: Download the file if it exists
-    download_file = FTPFileTransmitOperator(
+    download_file = SFTPOperator(
         task_id="download_file",
-        ftp_conn_id="nielsen_ftp_main",
+        ssh_conn_id="nielsen_ftp_main",
         remote_filepath="/EDI II Mediaplus/2018/EDI II Mediaplus.zip",  # File path on the FTP server
-        local_filepath="/Users/pradhanp/Documents/nielson_raw_files/2018/EDI II Mediaplus.zip",  # Where to save the file locally
+        local_filepath="/opt/airflow/data/EDI II Mediaplus.zip",  # Where to save the file locally
         operation="get",  # 'get' for download
         create_intermediate_dirs=True
     )
